@@ -23,7 +23,7 @@ A = TypeVar('A')
 def mc_prediction(
     traces: Iterable[Iterable[mp.TransitionStep[S]]],
     approx_0: ValueFunctionApprox[S],
-    γ: float,
+    gamma: float,
     episode_length_tolerance: float = 1e-6
 ) -> Iterator[ValueFunctionApprox[S]]:
     '''Evaluate an MRP using the monte carlo method, simulating episodes
@@ -35,15 +35,15 @@ def mc_prediction(
     Arguments:
       traces -- an iterator of simulation traces from an MRP
       approx_0 -- initial approximation of value function
-      γ -- discount rate (0 < γ ≤ 1), default: 1
-      episode_length_tolerance -- stop iterating once γᵏ ≤ tolerance
+      gamma -- discount rate (0 < gamma ≤ 1), default: 1
+      episode_length_tolerance -- stop iterating once gammaᵏ ≤ tolerance
 
     Returns an iterator with updates to the approximated value
     function after each episode.
 
     '''
     episodes: Iterator[Iterator[mp.ReturnStep[S]]] = \
-        (returns(trace, γ, episode_length_tolerance) for trace in traces)
+        (returns(trace, gamma, episode_length_tolerance) for trace in traces)
     f = approx_0
     yield f
 
@@ -57,14 +57,14 @@ def mc_prediction(
 def batch_mc_prediction(
     traces: Iterable[Iterable[mp.TransitionStep[S]]],
     approx: ValueFunctionApprox[S],
-    γ: float,
+    gamma: float,
     episode_length_tolerance: float = 1e-6,
     convergence_tolerance: float = 1e-5
 ) -> ValueFunctionApprox[S]:
     '''traces is a finite iterable'''
     return_steps: Iterable[mp.ReturnStep[S]] = \
         itertools.chain.from_iterable(
-            returns(trace, γ, episode_length_tolerance) for trace in traces
+            returns(trace, gamma, episode_length_tolerance) for trace in traces
         )
     return approx.solve(
         [(step.state, step.return_) for step in return_steps],
@@ -89,13 +89,13 @@ def greedy_policy_from_qvf(
 def epsilon_greedy_policy(
     q: QValueFunctionApprox[S, A],
     mdp: MarkovDecisionProcess[S, A],
-    ε: float = 0.0
+    epsilon: float = 0.0
 ) -> Policy[S, A]:
     def explore(s: S, mdp=mdp) -> Iterable[A]:
         return mdp.actions(NonTerminal(s))
     return RandomPolicy(Categorical(
-        {UniformPolicy(explore): ε,
-         greedy_policy_from_qvf(q, mdp.actions): 1 - ε}
+        {UniformPolicy(explore): epsilon,
+         greedy_policy_from_qvf(q, mdp.actions): 1 - epsilon}
     ))
 
 
@@ -103,8 +103,8 @@ def glie_mc_control(
     mdp: MarkovDecisionProcess[S, A],
     states: NTStateDistribution[S],
     approx_0: QValueFunctionApprox[S, A],
-    γ: float,
-    ϵ_as_func_of_episodes: Callable[[int], float],
+    gamma: float,
+    epsilon_as_func_of_episodes: Callable[[int], float],
     episode_length_tolerance: float = 1e-6
 ) -> Iterator[QValueFunctionApprox[S, A]]:
     '''Evaluate an MRP using the monte carlo method, simulating episodes
@@ -117,11 +117,11 @@ def glie_mc_control(
       mdp -- the Markov Decision Process to evaluate
       states -- distribution of states to start episodes from
       approx_0 -- initial approximation of value function
-      γ -- discount rate (0 ≤ γ ≤ 1)
-      ϵ_as_func_of_episodes -- a function from the number of episodes
+      gamma -- discount rate (0 ≤ gamma ≤ 1)
+      epsilon_as_func_of_episodes -- a function from the number of episodes
       to epsilon. epsilon is the fraction of the actions where we explore
       rather than following the optimal policy
-      episode_length_tolerance -- stop iterating once γᵏ ≤ tolerance
+      episode_length_tolerance -- stop iterating once gammaᵏ ≤ tolerance
 
     Returns an iterator with updates to the approximated Q function
     after each episode.
@@ -136,7 +136,7 @@ def glie_mc_control(
         trace: Iterable[TransitionStep[S, A]] = \
             mdp.simulate_actions(states, p)
         num_episodes += 1
-        for step in returns(trace, γ, episode_length_tolerance):
+        for step in returns(trace, gamma, episode_length_tolerance):
             q = q.update([((step.state, step.action), step.return_)])
-        p = epsilon_greedy_policy(q, mdp, ϵ_as_func_of_episodes(num_episodes))
+        p = epsilon_greedy_policy(q, mdp, epsilon_as_func_of_episodes(num_episodes))
         yield q

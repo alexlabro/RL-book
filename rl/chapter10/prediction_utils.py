@@ -44,7 +44,7 @@ def mc_finite_prediction_equal_wts(
     return mc.mc_prediction(
         traces=episodes,
         approx_0=Tabular(values_map=initial_vf_dict),
-        γ=gamma,
+        gamma=gamma,
         episode_length_tolerance=episode_length_tolerance
     )
 
@@ -61,7 +61,7 @@ def mc_prediction_learning_rate(
     return mc.mc_prediction(
         traces=episodes,
         approx_0=initial_func_approx,
-        γ=gamma,
+        gamma=gamma,
         episode_length_tolerance=episode_length_tolerance
     )
 
@@ -88,7 +88,7 @@ def mc_finite_prediction_learning_rate(
             values_map=initial_vf_dict,
             count_to_weight_func=learning_rate_func
         ),
-        γ=gamma,
+        gamma=gamma,
         episode_length_tolerance=episode_length_tolerance
     )
 
@@ -119,7 +119,7 @@ def td_prediction_learning_rate(
     return td.td_prediction(
         transitions=td_experiences,
         approx_0=initial_func_approx,
-        γ=gamma
+        gamma=gamma
     )
 
 
@@ -150,7 +150,7 @@ def td_finite_prediction_learning_rate(
             values_map=initial_vf_dict,
             count_to_weight_func=learning_rate_func
         ),
-        γ=gamma
+        gamma=gamma
     )
 
 
@@ -169,7 +169,7 @@ def td_lambda_prediction_learning_rate(
     return td_lambda.td_lambda_prediction(
         traces=curtailed_episodes,
         approx_0=initial_func_approx,
-        γ=gamma,
+        gamma=gamma,
         lambd=lambd
     )
 
@@ -199,7 +199,7 @@ def td_lambda_finite_prediction_learning_rate(
             values_map=initial_vf_dict,
             count_to_weight_func=learning_rate_func
         ),
-        γ=gamma,
+        gamma=gamma,
         lambd=lambd
     )
 
@@ -371,7 +371,7 @@ def compare_td_and_mc(
     td_episode_length: int = int(round(sum(
         len(list(returns(
             trace=fmrp.simulate_reward(Choose(states)),
-            γ=gamma,
+            gamma=gamma,
             tolerance=mc_episode_length_tol
         ))) for _ in range(sample_episodes)
     ) / sample_episodes))

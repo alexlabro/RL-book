@@ -27,7 +27,7 @@ S = TypeVar('S')
 def td_prediction(
         transitions: Iterable[mp.TransitionStep[S]],
         approx_0: ValueFunctionApprox[S],
-        γ: float
+        gamma: float
 ) -> Iterator[ValueFunctionApprox[S]]:
     '''Evaluate an MRP using TD(0) using the given sequence of
     transitions.
@@ -48,7 +48,7 @@ def td_prediction(
     ) -> ValueFunctionApprox[S]:
         return v.update([(
             transition.state,
-            transition.reward + γ * extended_vf(v, transition.next_state)
+            transition.reward + gamma * extended_vf(v, transition.next_state)
         )])
     return iterate.accumulate(transitions, step, initial=approx_0)
 

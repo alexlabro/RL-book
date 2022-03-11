@@ -16,7 +16,7 @@ S = TypeVar('S')
 def lambda_return_prediction(
         traces: Iterable[Iterable[mp.TransitionStep[S]]],
         approx_0: ValueFunctionApprox[S],
-        γ: float,
+        gamma: float,
         lambd: float
 ) -> Iterator[ValueFunctionApprox[S]]:
     '''Value Function Prediction using the lambda-return method given a
@@ -28,7 +28,7 @@ def lambda_return_prediction(
     Arguments:
       traces -- a sequence of traces
       approx_0 -- initial approximation of value function
-      γ -- discount rate (0 < γ ≤ 1)
+      gamma -- discount rate (0 < gamma ≤ 1)
       lambd -- lambda parameter (0 <= lambd <= 1)
     '''
     func_approx: ValueFunctionApprox[S] = approx_0
@@ -46,7 +46,7 @@ def lambda_return_prediction(
                 partial.append(
                     partial[-1] +
                     gp[t - i] * (tr.reward - func_approx(tr.state)) +
-                    (gp[t - i] * γ * extended_vf(func_approx, tr.next_state)
+                    (gp[t - i] * gamma * extended_vf(func_approx, tr.next_state)
                      if t < len(trace_seq) - 1 else 0.)
                 )
                 weights[i].append(
@@ -55,10 +55,10 @@ def lambda_return_prediction(
                 )
             predictors.append(tr.state)
             partials.append([tr.reward +
-                             (γ * extended_vf(func_approx, tr.next_state)
+                             (gamma * extended_vf(func_approx, tr.next_state)
                               if t < len(trace_seq) - 1 else 0.)])
             weights.append([1. - (lambd if t < len(trace_seq) else 0.)])
-            gp.append(gp[-1] * γ)
+            gp.append(gp[-1] * gamma)
             lp.append(lp[-1] * lambd)
         responses: Sequence[float] = [np.dot(p, w) for p, w in
                                       zip(partials, weights)]
@@ -70,7 +70,7 @@ def lambda_return_prediction(
 def td_lambda_prediction(
         traces: Iterable[Iterable[mp.TransitionStep[S]]],
         approx_0: ValueFunctionApprox[S],
-        γ: float,
+        gamma: float,
         lambd: float
 ) -> Iterator[ValueFunctionApprox[S]]:
     '''Evaluate an MRP using TD(lambda) using the given sequence of traces.
@@ -82,7 +82,7 @@ def td_lambda_prediction(
       transitions -- a sequence of transitions from an MRP which don't
                      have to be in order or from the same simulation
       approx_0 -- initial approximation of value function
-      γ -- discount rate (0 < γ ≤ 1)
+      gamma -- discount rate (0 < gamma ≤ 1)
       lambd -- lambda parameter (0 <= lambd <= 1)
     '''
     func_approx: ValueFunctionApprox[S] = approx_0
@@ -92,9 +92,9 @@ def td_lambda_prediction(
         el_tr: Gradient[ValueFunctionApprox[S]] = Gradient(func_approx).zero()
         for step in trace:
             x: NonTerminal[S] = step.state
-            y: float = step.reward + γ * \
+            y: float = step.reward + gamma * \
                 extended_vf(func_approx, step.next_state)
-            el_tr = el_tr * (γ * lambd) + func_approx.objective_gradient(
+            el_tr = el_tr * (gamma * lambd) + func_approx.objective_gradient(
                 xy_vals_seq=[(x, y)],
                 obj_deriv_out_fun=lambda x1, y1: np.ones(len(x1))
             )
